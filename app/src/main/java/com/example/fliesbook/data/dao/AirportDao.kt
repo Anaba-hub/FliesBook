@@ -11,7 +11,7 @@ interface AirportDao {
     @Insert
     suspend fun insertAirport(airport: Airport)
 
-    @Query("SELECT * FROM airport WHERE iataCode LIKE :iataCode LIMIT 10")
+    @Query("SELECT * FROM airport WHERE iata_code LIKE :iataCode LIMIT 10")
     suspend fun searchAirportsByCode(iataCode: String): List<Airport>
 
     @Query("SELECT * FROM airport WHERE id = :id")

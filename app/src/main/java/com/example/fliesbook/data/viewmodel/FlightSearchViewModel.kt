@@ -9,32 +9,46 @@ import com.example.fliesbook.data.model.Favorite
 import com.example.fliesbook.data.preferences.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class FlightSearchViewModel(
     private val airportDao: AirportDao,
     private val favoriteDao: FavoriteDao,
     private val preferencesManager: PreferencesManager
-): ViewModel() {
+) : ViewModel() {
 
+    // StateFlow to hold the search results for airports
     private val _searchResults = MutableStateFlow<List<Airport>>(emptyList())
     val searchResults: StateFlow<List<Airport>> = _searchResults
 
+    // StateFlow to hold the list of favorite routes
     private val _favorites = MutableStateFlow<List<Favorite>>(emptyList())
     val favorites: StateFlow<List<Favorite>> = _favorites
 
+    // StateFlow to hold the current search query
     private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String?> = _searchQuery
+    val searchQuery: StateFlow<String> = _searchQuery
 
+    init {
+        // Initialize the ViewModel by loading the last search query and performing the search
+        viewModelScope.launch {
+            _searchQuery.value = preferencesManager.searchQuery.first() ?: ""
+            searchAirports(_searchQuery.value)
+        }
+    }
+
+    // Function to search for airports based on the provided query
     fun searchAirports(query: String) {
         viewModelScope.launch {
             _searchQuery.value = query
-            preferencesManager.saveSearchQuery(query)
-            val results = airportDao.searchAirportsByCode("%$query%")
+            preferencesManager.saveSearchQuery(query) // Save the query to DataStore
+            val results = airportDao.searchAirportsByCode("%$query%") // Perform the search
             _searchResults.value = results
         }
     }
 
+    // Function to add a favorite route to the database
     fun addFavorite(departureCode: String, destinationCode: String) {
         viewModelScope.launch {
             val favorite = Favorite(
@@ -42,11 +56,12 @@ class FlightSearchViewModel(
                 departureCode = departureCode,
                 destinationCode = destinationCode
             )
-            favoriteDao.insertFavorite(favorite)
-            loadFavorites()
+            favoriteDao.insertFavorite(favorite) // Insert the favorite route
+            loadFavorites() // Refresh the list of favorites
         }
     }
 
+    // Function to load all favorite routes from the database
     fun loadFavorites() {
         viewModelScope.launch {
             val allFavorites = favoriteDao.getAllFavorites()
@@ -54,11 +69,11 @@ class FlightSearchViewModel(
         }
     }
 
+    // Function to delete a favorite route from the database
     fun deleteFavorite(favoriteId: Int) {
         viewModelScope.launch {
-            favoriteDao.deleteFavoriteById(favoriteId)
-            loadFavorites()
+            favoriteDao.deleteFavoriteById(favoriteId) // Delete the favorite route
+            loadFavorites() // Refresh the list of favorites
         }
     }
-
 }
