@@ -8,12 +8,15 @@ import com.example.fliesbook.data.model.Favorite
 @Dao
 interface FavoriteDao {
 
+    // Insérer un nouvel itinéraire favori dans la base de données
     @Insert
-    suspend fun insertFavorite(favorite: Favorite)
+    fun insertFavorite(favorite: Favorite)
 
+    // Récupérer tous les itinéraires favoris depuis la base de données
     @Query("SELECT * FROM favorite")
-    suspend fun getAllFavorites(): List<Favorite>
+    fun getAllFavorites(): List<Favorite>
 
+    // Supprimer un itinéraire favori par son ID
     @Query("DELETE FROM favorite WHERE id = :id")
-    suspend fun deleteFavoriteById(id: Int)
+    fun deleteFavoriteById(id: Int)
 }
